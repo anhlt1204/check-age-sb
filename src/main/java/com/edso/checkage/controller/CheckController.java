@@ -3,6 +3,7 @@ package com.edso.checkage.controller;
 import com.edso.checkage.service.CheckService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -16,9 +17,8 @@ public class CheckController {
     }
 
     @GetMapping("/check")
-    Boolean checkAge() {
+    Boolean checkAge(@RequestParam String name, @RequestParam Integer age) {
         log.info("Run check");
-        return service.runCheck();
+        return service.runCheck(name, age);
     }
-
 }

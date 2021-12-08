@@ -1,30 +1,38 @@
 package com.edso.checkage.model;
 
 import com.edso.checkage.service.CheckService;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.concurrent.locks.ReentrantLock;
 
-public class Dad extends Thread{
+@Slf4j
+public class Dad extends Thread {
 
-    private final ReentrantLock lock;
-    public Dad(ReentrantLock lock) {
-        this.lock = lock;
+    private Data data;
+    private String name;
+    private Integer age;
+
+    public Dad(Data data, String name, Integer age) {
+        this.data = data;
+        this.name = name;
+        this.age = age;
     }
 
     @Override
     public void run() {
-        lock.lock();
+        log.info("d start" + name);
         try {
-            if (checkAge(readFile()))
-                CheckService.count++;
-        } catch (IOException e) {
+            Thread.sleep(1000);
+            if (checkAge(readFile())) {
+                data.setCount(data.getCount() + 1);
+            }
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
-        } finally {
-            lock.unlock();
         }
+        data.setCountT(data.getCountT() + 1);
+        log.info("d stop" + name);
     }
 
     private int readFile() throws IOException {
@@ -33,18 +41,17 @@ public class Dad extends Thread{
         BufferedReader bufR = null;
 
         try {
-            frd = new FileReader("src/main/resources/file/dad.txt");
+            frd = new FileReader("src/main/resources/file/" + name + "dad.txt");
             bufR = new BufferedReader(frd);
             String line;
-            while ((line = bufR.readLine()) != null)
-            {
+            while ((line = bufR.readLine()) != null) {
                 age = Integer.parseInt(line);
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             try {
-                if(bufR != null ) {
+                if (bufR != null) {
                     bufR.close();
                 }
             } catch (IOException e) {
@@ -56,7 +63,7 @@ public class Dad extends Thread{
     }
 
     private boolean checkAge(int age) {
-        return age == 21;
+        return age == this.age;
     }
 }
 

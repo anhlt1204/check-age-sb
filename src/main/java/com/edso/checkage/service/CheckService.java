@@ -1,6 +1,7 @@
 package com.edso.checkage.service;
 
 import com.edso.checkage.model.Dad;
+import com.edso.checkage.model.Data;
 import com.edso.checkage.model.Mom;
 import com.edso.checkage.model.Ubnd;
 import lombok.extern.slf4j.Slf4j;
@@ -9,19 +10,16 @@ import org.springframework.stereotype.Service;
 import java.io.FileWriter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @Slf4j
 public class CheckService {
-    private static final ReentrantLock lock = new ReentrantLock();
-    public static int count = 0;
 
-    public boolean runCheck() {
-        Dad dad = new Dad(lock);
-        Mom mom = new Mom(lock);
-        Ubnd ubnd = new Ubnd(lock);
+    public boolean runCheck(String name, Integer age) {
+        Data data = new Data();
+        Dad dad = new Dad(data, name, age);
+        Mom mom = new Mom(data, name, age);
+        Ubnd ubnd = new Ubnd(data, name, age);
 
         ExecutorService executor = Executors.newFixedThreadPool(3);
 
@@ -31,32 +29,33 @@ public class CheckService {
 
         executor.shutdown();
 
-        try {
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("==>" + count);
         boolean checkAge = false;
-        if (count >= 2) {
-            checkAge = true;
-        }
-        count = 0;
 
-        write(checkAge);
+        while (data.getCountT() < 3) {
+            if (data.getCount() >= 2) {
+                checkAge = true;
+                break;
+            }
+        }
+        if (data.getCount() >= 2)
+            checkAge = true;
+        data.setCountT(0);
+        data.setCount(0);
+
+        write(name, checkAge);
         log.info("Check success");
         return checkAge;
     }
 
-    public static void write(boolean check) {
+    public static void write(String name, boolean check) {
+        log.info("Write start");
         try {
-            FileWriter fw = new FileWriter("result.txt");
+            FileWriter fw = new FileWriter(name + "result.txt");
             fw.write(String.valueOf(check));
             fw.close();
         } catch (Exception e) {
             System.out.println(e);
         }
-        System.out.println("Success...");
+        log.info("Write success");
     }
 }
